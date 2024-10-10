@@ -24,15 +24,15 @@ namespace GTerm
         private static readonly StringBuilder MarkupBuffer = new();
         private static readonly StringBuilder InputBuffer = new();
         private static readonly Thread UserInputThread = new(ProcessUserInput);
-        private static readonly ILogListener Listener = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
-            ? new WindowsLogListener() 
+        private static readonly ILogListener Listener = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? new WindowsLogListener()
             : new UnixLogListener();
 
         private static string ArchivePath = string.Empty;
         private static Config Config = new();
 
         static void Main(string[] args)
-        { 
+        {
             LocalLogger.WriteLine("Starting up...");
 
             // prevent running it multiple times
@@ -64,7 +64,8 @@ namespace GTerm
 
                         LocalLogger.WriteLine("Gmod crashed, attempting to restart!");
                         ProcessStartInfo oldStartInfo = parent.StartInfo;
-                        if (GmodInterop.TryGetGmodPath(out string gmodBinpath)) {
+                        if (GmodInterop.TryGetGmodPath(out string gmodBinpath))
+                        {
                             oldStartInfo.FileName = gmodBinpath;
                             LocalLogger.WriteLine("Restarting Gmod!");
                             Process.Start(parent.StartInfo); // reboot gmod because crash and it was the owning process
@@ -168,7 +169,8 @@ namespace GTerm
             List<ConsoleKey> gmodConsoleKeys = GmodInterop.GetConsoleBindings();
             while (true)
             {
-                if (!Console.KeyAvailable) {
+                if (!Console.KeyAvailable)
+                {
                     Thread.Sleep(100);
                     continue;
                 }
@@ -182,6 +184,13 @@ namespace GTerm
                             InputBuffer.Clear();
 
                             if (string.IsNullOrWhiteSpace(input.Trim())) continue;
+
+                            // Windows doesn't flush the input properly
+                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            {
+                                Console.Write(new string(' ', Console.BufferWidth - 1));
+                                Console.CursorLeft = 0;
+                            }
 
                             if (input.Trim().Equals("clear", StringComparison.CurrentCultureIgnoreCase))
                                 Console.Clear();
@@ -205,11 +214,12 @@ namespace GTerm
 
                     case ConsoleKey key when gmodConsoleKeys.Contains(key):
                     case ConsoleKey.Escape:
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        {
                             IntPtr hWndConsole = Win32Extensions.GetConsoleWindow();
                             Win32Extensions.ShowWindow(hWndConsole, Win32Extensions.SW_MINIMIZE);
                         }
-                      
+
                         break;
 
                     default:
@@ -307,9 +317,9 @@ namespace GTerm
                         int currentTopCursor = Console.CursorTop;
                         int currentLeftCursor = Console.CursorLeft;
 
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        {
                             Console.MoveBufferArea(0, currentTopCursor, Console.WindowWidth, 1, 0, Math.Min(Console.BufferHeight - 1, currentTopCursor + 1));
-                        
                         }
 
                         Console.CursorTop = Math.Min(Console.BufferHeight - 1, currentTopCursor);
